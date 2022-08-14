@@ -3,6 +3,9 @@ name = "axum-named-routes"
 version = "0.1.0"
 edition = "2021"
 license = "MIT"
+description = "A Router for axum that allows routes to be named"
+repository = "https://github.com/Atrociously/axum-named-routes"
+readme = "README.md"
 
 [dependencies]
 axum = { version = "0.5", default-features = false }
