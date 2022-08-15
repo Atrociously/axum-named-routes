@@ -5,11 +5,9 @@
 [![Crates.io](https://img.shields.io/crates/v/axum-named-routes)](https://crates.io/crates/axum-named-routes)
 [![Documentation](https://docs.rs/axum-named-routes/badge.svg)](https://docs.rs/axum-named-routes) 
 
-## Features
+## Safety
 
 - Uses 100% safe rust with `#![forbid(unsafe_code)]`
-
-- Simple wrapper over the axum router so correctness is left mostly to [axum](https://github.com/tokio-rs/axum).
 
 ## Usage Example
 
@@ -58,7 +56,8 @@ That example can be found in `examples/simple.rs`.
 
 ## Performance
 
-The creation of the router adds slightly more overhead, but by sending the route map to an axum extension there should be no affects on request performance. Also the route map itself is based on an `Arc` meaning it should be performant when copied via the extension.
+The creation of the router adds slightly more overhead, but by sending the route map to an axum extension there should be little to no effect on runtime performance.
+Also the route map itself is based on an `Arc` meaning it should be performant when cloned via the extension.
 
 ## License
 
