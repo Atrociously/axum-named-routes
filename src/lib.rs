@@ -234,7 +234,6 @@ where
             // not start with a "/" meaning inner_path is guaranteed to start with a "/" but that
             // also means if we don't remove it then the path.join will fail to properly join the
             // paths as it will think inner_path is an absolute path
-            #[allow(clippy::unwrap_used)]
             let inner_path = inner_path.strip_prefix("/").unwrap();
             (
                 name.clone() + &self.nest_sep + &inner_name,
