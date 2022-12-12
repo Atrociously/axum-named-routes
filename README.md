@@ -56,8 +56,8 @@ That example can be found in `examples/simple.rs`.
 
 ## Performance
 
-The creation of the router adds slightly more overhead, but by sending the route map to an axum extension there should be little to no effect on runtime performance.
-Also the route map itself is based on an `Arc` meaning it should be performant when cloned via the extension.
+The router uses a `HashMap` internally while creating the map, and wraps it in an `Arc` when it is finished to add it as an axum extension.
+So overall the performance cost should be very low.
 
 ## License
 
