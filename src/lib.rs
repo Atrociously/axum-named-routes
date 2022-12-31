@@ -106,7 +106,11 @@ pub struct NamedRouter<S = (), B = axum::body::Body> {
     nest_sep: String,
 }
 
-impl NamedRouter {
+impl<S, B> NamedRouter<S, B>
+where
+    S: Clone + Send + Sync + 'static,
+    B: HttpBody + Send + 'static,
+{
     /// Create a new NamedRouter with default values.
     /// The default name separator is `.`
     pub fn new() -> Self {
@@ -120,13 +124,7 @@ impl NamedRouter {
             ..Default::default()
         }
     }
-}
 
-impl<S, B> NamedRouter<S, B>
-where
-    S: Clone + Send + Sync + 'static,
-    B: HttpBody + Send + 'static,
-{
     /// Set the separator for the router to use when nesting
     pub fn set_separator<T: Into<String>>(mut self, sep: T) -> Self {
         self.nest_sep = sep.into();
@@ -378,13 +376,13 @@ mod tests {
     use std::path::PathBuf;
 
     use crate::NamedRouter;
-    use axum::routing::get;
+    use axum::{routing::get, body::Body};
 
     async fn dummy() {}
 
     #[test]
     fn nesting() {
-        let a = NamedRouter::new().route("route_a", "/a", get(dummy));
+        let a = NamedRouter::<(), Body>::new().route("route_a", "/a", get(dummy));
         let b = NamedRouter::new()
             .route("route_a", "/a", get(dummy))
             .route("route_b", "/b", get(dummy));
@@ -406,7 +404,7 @@ mod tests {
     #[test]
     #[should_panic]
     fn route_overlap() {
-        let a = NamedRouter::new().route("route_a", "/a", get(dummy));
+        let a = NamedRouter::<(), Body>::new().route("route_a", "/a", get(dummy));
         let b = NamedRouter::new().route("route_a", "/a", get(dummy));
         NamedRouter::new().nest("a", "/", a).nest("b", "/", b);
     }
