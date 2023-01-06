@@ -12,7 +12,7 @@ use std::{collections::HashMap, convert::Infallible, path::PathBuf, sync::Arc, t
 use axum::{
     body::{BoxBody, HttpBody},
     extract::{
-        connect_info::IntoMakeServiceWithConnectInfo, rejection::ExtensionRejection, FromRequest,
+        connect_info::IntoMakeServiceWithConnectInfo, rejection::ExtensionRejection, FromRequestParts,
     },
     http::Request,
     response::{Response, IntoResponse},
@@ -73,21 +73,16 @@ impl Routes {
     }
 }
 
-impl<S, B> FromRequest<S, B> for Routes
-where
-    B: Send + 'static,
-    S: Send + Sync,
-{
+impl<S: Send + Sync> FromRequestParts<S> for Routes {
     type Rejection = ExtensionRejection;
-    fn from_request<'life0, 'async_trait>(
-        req: Request<B>,
-        state: &'life0 S,
-    ) -> BoxFuture<'async_trait, Result<Self, Self::Rejection>>
-    where
-        'life0: 'async_trait,
-        Self: 'async_trait,
+
+    fn from_request_parts<'life0,'life1,'async_trait>(parts: &'life0 mut axum::http::request::Parts, state: &'life1 S) -> BoxFuture<'async_trait, Result<Self, Self::Rejection>>
+    where 
+        'life0:'async_trait,
+        'life1:'async_trait,
+        Self:'async_trait
     {
-        Extension::<Self>::from_request(req, state)
+        Extension::<Self>::from_request_parts(parts, state)
             .map_ok(|ext| ext.0)
             .boxed()
     }
@@ -176,7 +171,7 @@ where
     /// The merges the inner axum [`Router`](axum::Router) and the route map on this router
     pub fn merge<R>(mut self, other: R) -> Self
     where
-        R: Into<Self>,
+        R: Into<NamedRouter<S, B>>,
     {
         let other = other.into();
         self.inner = self.inner.merge(other.inner);
@@ -198,14 +193,17 @@ where
     ///     "Hello, World!"
     /// }
     ///
-    /// let ui_router = NamedRouter::new()
+    /// let ui_router: NamedRouter<(), axum::body::Body> = NamedRouter::new()
     ///     .route("index", "/", get(index));
-    /// let base = NamedRouter::new()
-    ///     .nest("ui", "/", ui_router);
+    /// let base: NamedRouter<(), _> = NamedRouter::new()
+    ///     .nest("ui", "/", ui_router)
+    ///     .with_state(());
     ///
     /// let routes = base.routes();
     /// assert!(routes.get("ui.index").is_some());
     /// assert_eq!(routes.get("ui.index").unwrap(), &PathBuf::from("/"));
+    ///
+    /// base.into_make_service();
     /// ```
     ///
     /// Also ensures all paths in `router` are joined to `path` uses
@@ -214,7 +212,7 @@ where
     where
         N: Into<String>,
         P: AsRef<str>,
-        R: Into<Self>,
+        R: Into<NamedRouter<S, B>>,
     {
         let name = name.into();
         let router = router.into();
@@ -375,10 +373,10 @@ mod tests {
 
     use std::path::PathBuf;
 
-    use crate::NamedRouter;
+    use crate::{NamedRouter, Routes};
     use axum::{routing::get, body::Body};
 
-    async fn dummy() {}
+    async fn dummy(_routes: Routes) {}
 
     #[test]
     fn nesting() {
