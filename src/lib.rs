@@ -305,6 +305,11 @@ where
     pub fn routes(&self) -> &HashMap<String, PathBuf> {
         &self.routes
     }
+
+    /// Convert into a [`Router`](axum::Router) after adding an [`Routes`] as an [`Extension`](axum::extract::Extension) layer
+    pub fn into_router(self) -> axum::Router<S, B> {
+        self.inner.layer(Extension(Routes::new(self.routes)))
+    }
 }
 
 impl<B> NamedRouter<(), B>
@@ -315,7 +320,7 @@ where
     /// adding an [`Extension<Routes>`](axum::extract::Extension) layer to the inner router
     #[cfg(feature = "tokio")]
     pub fn into_make_service(self) -> IntoMakeService<axum::Router<(), B>> {
-        let inner = self.inner.layer(Extension(Routes::new(self.routes)));
+        let inner = self.into_router();
         inner.into_make_service()
     }
 
@@ -325,7 +330,7 @@ where
     pub fn into_make_service_with_connect_info<C>(
         self,
     ) -> IntoMakeServiceWithConnectInfo<axum::Router<(), B>, C> {
-        let inner = self.inner.layer(Extension(Routes::new(self.routes)));
+        let inner = self.into_router();
         inner.into_make_service_with_connect_info()
     }
 }
