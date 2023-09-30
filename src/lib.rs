@@ -7,7 +7,7 @@
 //!
 //! Check out [`NamedRouter`] and [`Routes`] for more information on how this works
 
-use std::{collections::HashMap, convert::Infallible, path::PathBuf, sync::Arc, task::Poll};
+use std::{collections::HashMap, convert::Infallible, path::{PathBuf, Path}, sync::Arc, task::Poll};
 
 use axum::{
     body::{BoxBody, HttpBody},
@@ -64,6 +64,19 @@ impl Routes {
         F: FnOnce() -> E,
     {
         self.0.get(name).ok_or_else(f)
+    }
+
+    /// Find name by path
+    ///
+    /// This is a linear seach of the values within the map
+    pub fn find(&self, path: impl AsRef<Path>) -> Option<&str> {
+        let path = path.as_ref();
+        for (k, v) in self.0.iter() {
+            if v == path {
+                return Some(k.as_ref());
+            }
+        }
+        None
     }
 }
 
@@ -226,7 +239,6 @@ where
             // paths as it will think inner_path is an absolute path
             let inner_path = inner_path.strip_prefix("/").unwrap();
             (
-                // this probably won't allocate unless the user passes in a `String` name/nest_sep
                 name.clone() + self.nest_sep.clone() + inner_name,
                 path.join(inner_path),
             )
